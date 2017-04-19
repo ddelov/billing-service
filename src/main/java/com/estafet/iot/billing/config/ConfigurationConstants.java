@@ -1,14 +1,16 @@
 package com.estafet.iot.billing.config;
 
 public interface ConfigurationConstants {
-	// DynamoDB constants
-	public static final String ID = "id";
-	public static final String TABLE_NAME = "DeviceOwnership";
-	public static final String CUSTOMER_ID = "customerId";
-	public static final String THING_NAME = "thingName";
-	public static final String THING_TYPE = "thingType";
-	public static final String VALID_FROM = "validFrom";
-	public static final String VALID_TO = "validTo";
+	// DB constants
+	public static final String COL_ID = "id";
+	public static final String TABLE_NAME = "dev_ownership";
+	public static final String COL_CUSTOMER_ID = "customer_id";
+	public static final String COL_THING_NAME = "thing_name";
+	public static final String COL_THING_TYPE = "thing_type";
+	public static final String COL_VALID_FROM = "valid_from";
+	public static final String COL_VALID_TO = "valid_to";
+	public static final String COL_OWN = "own";
+	public static final String COL_SN = "sn";
 
 	// REST constants
 	public static final String HEADERS = "headers";

@@ -2,6 +2,9 @@ package com.estafet.iot.billing.rest.resources;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -20,6 +23,7 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.estafet.iot.billing.config.ConfigurationConstants;
+import com.estafet.iot.billing.error.DBException;
 import com.estafet.iot.billing.models.DeviceBilling;
 import com.estafet.iot.billing.models.Item;
 
@@ -31,7 +35,7 @@ public class TestService {
 	@GET
 	@Path("/getBilling")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response ping(@HeaderParam("customer_id") String customerId, @HeaderParam("role") String role) {
+	public Response getBilling(@HeaderParam("customer_id") String customerId, @HeaderParam("role") String role) {
 
 		if (role == null || role.isEmpty()) {
 			return Response.status(400).entity("The role input header is not present.").build();
@@ -41,23 +45,22 @@ public class TestService {
 			return Response.status(400)
 					.entity("The role header does not have the specific rights to get a billing report.").build();
 		}
-		
-		/*Connection connection = null;
-		try {
-			Class.forName("org.postgresql.Driver");
-			connection = DriverManager.getConnection("jdbc:postgresql://172.17.0.5:5432/sampledb", "test", "test");
-		} catch (Exception e) {
-		}*/
 
 		if (customerId != null && !customerId.isEmpty()) {
 			Map<String, DeviceBilling> devices = new HashMap<String, DeviceBilling>();
-			//TODO select query COL_CUSTOMER_ID = HEADER_CUSTOMER_ID
+			String query = "SELECT * FROM dev_ownership d WHERE d.customer_id LIKE " + customerId + ";";
 			List<Item> scanOutcome = new ArrayList<Item>();
+			try {
+				scanOutcome = loadItems(query);
+			} catch (DBException e) {
+				return Response.status(400).entity(e.getMessage()).build();
+			}
+
 			for (Item item : scanOutcome) {
 				DeviceBilling device = new DeviceBilling();
 				int costs = calculateBillingForThePeriod(item);
 				int days = costs / getDevicePrice(item.getThingType());
-				
+
 				String deviceName = (String) item.getThingName();
 				device.setDeviceName(deviceName);
 				if (devices.containsKey(deviceName)) {
@@ -73,22 +76,26 @@ public class TestService {
 					devices.put(deviceName, device);
 				}
 			}
-			
+
 			if (scanOutcome.isEmpty()) {
 				return Response.status(200).entity("No devices are found for the specific user.").build();
 			}
-			
+
 			List<DeviceBilling> billings = new ArrayList<DeviceBilling>();
 			for (String key : devices.keySet()) {
 				billings.add(devices.get(key));
 			}
-			
+
 			return Response.status(200).entity(billings).build();
 		} else {
-
 			Map<String, Integer> billings = new HashMap<String, Integer>();
-			//TODO select query FROM table SELECT *;
+			String query = "SELECT * FROM dev_ownership;";
 			List<Item> scanOutcome = new ArrayList<Item>();
+			try {
+				scanOutcome = loadItems(query);
+			} catch (DBException e) {
+				return Response.status(400).entity(e.getMessage()).build();
+			}
 
 			for (Item item : scanOutcome) {
 				if (!billings.containsKey(customerId)) {
@@ -107,6 +114,7 @@ public class TestService {
 
 			return Response.status(200).entity(billings).build();
 		}
+
 	}
 
 	private Date transformDate(String dateArg) {
@@ -125,8 +133,7 @@ public class TestService {
 		int result = 0;
 		int ratio = getDevicePrice((String) item.getThingType());
 		String validFromString = (String) item.getValidFrom();
-		String validToString = (item.getValidTo() != null)
-				? ((String) item.getValidTo()) : null;
+		String validToString = (item.getValidTo() != null) ? ((String) item.getValidTo()) : null;
 		Date validFrom = transformDate(validFromString);
 		Date currentDate = new Date();
 
@@ -157,5 +164,54 @@ public class TestService {
 		} else {
 			return 1;
 		}
+	}
+
+	public List<Item> loadItems(String query) throws DBException {
+		List<Item> items = new ArrayList<Item>();
+		Connection connection = null;
+		Statement statement = null;
+		ResultSet resultSet = null;
+		try {
+			Class.forName("org.postgresql.Driver");
+			connection = DriverManager.getConnection("jdbc:postgresql://172.17.0.5:5432/sampledb", "test", "test");
+			if (connection != null) {
+				connection.setAutoCommit(false);
+				logger.debug("Opened database to select items successfully");
+
+				statement = connection.createStatement();
+				resultSet = statement.executeQuery(query);
+				while (resultSet.next()) {
+					Item item = new Item();
+					item.setId(resultSet.getString(ConfigurationConstants.COL_ID));
+					item.setCustomerId(resultSet.getString(ConfigurationConstants.COL_CUSTOMER_ID));
+					item.setThingName(resultSet.getString(ConfigurationConstants.COL_THING_NAME));
+					item.setThingType(resultSet.getString(ConfigurationConstants.COL_THING_TYPE));
+					item.setSn(resultSet.getString(ConfigurationConstants.COL_SN));
+					item.setOwn(resultSet.getBoolean(ConfigurationConstants.COL_OWN));
+					item.setValidFrom(resultSet.getString(ConfigurationConstants.COL_VALID_FROM));
+					item.setValidTo(resultSet.getString(ConfigurationConstants.COL_VALID_TO));
+					items.add(item);
+				}
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw new DBException(e.getMessage());
+		} finally {
+			try {
+				if (resultSet != null) {
+					resultSet.close();
+				}
+				if (statement != null) {
+					statement.close();
+				}
+				if (connection != null) {
+					connection.commit();
+					connection.close();
+				}
+			} catch (SQLException sqle) {
+				logger.error(sqle.getMessage(), sqle);
+			}
+		}
+		return items;
 	}
 }
