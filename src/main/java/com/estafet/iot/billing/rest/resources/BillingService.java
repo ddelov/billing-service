@@ -28,9 +28,9 @@ import com.estafet.iot.billing.models.DeviceBilling;
 import com.estafet.iot.billing.models.Item;
 
 @Path("/")
-public class TestService {
+public class BillingService {
 
-	private final Logger logger = Logger.getLogger(TestService.class);
+	private final Logger logger = Logger.getLogger(BillingService.class);
 
 	@GET
 	@Path("/getBilling")
