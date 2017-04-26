@@ -67,7 +67,7 @@ public class BillingService {
 					devices.put(deviceName, device);
 				}
 			}
-
+				logger.debug("scanOutcome.size() = " + scanOutcome.size());
 			if (scanOutcome.isEmpty()) {
 				return Response.status(200).entity("No devices are found for the specific user.").build();
 			}
@@ -75,6 +75,7 @@ public class BillingService {
 			List<DeviceBilling> billings = new ArrayList<DeviceBilling>();
 			for (String key : devices.keySet()) {
 				billings.add(devices.get(key));
+				logger.debug("Added billing for device " + key);
 			}
 
 			return Response.status(200).entity(billings).build();
@@ -87,15 +88,17 @@ public class BillingService {
 			} catch (DBException e) {
 				return Response.status(400).entity(e.getMessage()).build();
 			}
-
+				logger.debug("scanOutcome.size() = " + scanOutcome.size());
 			for (Item item : scanOutcome) {
 				if (!billings.containsKey(customerId)) {
 					int billing = calculateBillingForThePeriod(item);
 					billings.put(customerId, billing);
+					logger.debug("Initial billings for customer "+customerId + " is "+ billing);
 				} else {
 					int billingResult = billings.get(customerId);
 					billingResult += calculateBillingForThePeriod(item);
 					billings.put(customerId, billingResult);
+					logger.debug("Updated billings for customer "+customerId + " is "+ billingResult);
 				}
 			}
 
