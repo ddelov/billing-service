@@ -1,17 +1,10 @@
 package com.estafet.iot.billing.rest.resources;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.estafet.iot.billing.config.ConfigurationConstants;
+import com.estafet.iot.billing.error.DBException;
+import com.estafet.iot.billing.models.DeviceBilling;
+import com.estafet.iot.billing.models.Item;
+import org.apache.log4j.Logger;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -19,13 +12,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
-import org.apache.log4j.Logger;
-
-import com.estafet.iot.billing.config.ConfigurationConstants;
-import com.estafet.iot.billing.error.DBException;
-import com.estafet.iot.billing.models.DeviceBilling;
-import com.estafet.iot.billing.models.Item;
+import java.sql.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Date;
 
 @Path("/")
 public class BillingService {
@@ -48,7 +39,7 @@ public class BillingService {
 
 		if (customerId != null && !customerId.isEmpty()) {
 			Map<String, DeviceBilling> devices = new HashMap<String, DeviceBilling>();
-			String query = "SELECT * FROM openshift.dev_ownership d WHERE d.customer_id LIKE " + customerId + ";";
+			String query = "SELECT * FROM openshift.dev_ownership d WHERE d.customer_id LIKE '" + customerId + "'";
 			List<Item> scanOutcome = new ArrayList<Item>();
 			try {
 				scanOutcome = loadItems(query);
@@ -89,7 +80,7 @@ public class BillingService {
 			return Response.status(200).entity(billings).build();
 		} else {
 			Map<String, Integer> billings = new HashMap<String, Integer>();
-			String query = "SELECT * FROM dev_ownership;";
+			String query = "SELECT * FROM openshift.dev_ownership;";
 			List<Item> scanOutcome = new ArrayList<Item>();
 			try {
 				scanOutcome = loadItems(query);
