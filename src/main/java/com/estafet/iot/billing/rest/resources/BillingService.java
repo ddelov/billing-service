@@ -48,7 +48,7 @@ public class BillingService {
 
 		if (customerId != null && !customerId.isEmpty()) {
 			Map<String, DeviceBilling> devices = new HashMap<String, DeviceBilling>();
-			String query = "SELECT * FROM dev_ownership d WHERE d.customer_id LIKE " + customerId + ";";
+			String query = "SELECT * FROM openshift.dev_ownership d WHERE d.customer_id LIKE " + customerId + ";";
 			List<Item> scanOutcome = new ArrayList<Item>();
 			try {
 				scanOutcome = loadItems(query);
@@ -173,7 +173,9 @@ public class BillingService {
 		ResultSet resultSet = null;
 		try {
 			Class.forName("org.postgresql.Driver");
-			connection = DriverManager.getConnection("jdbc:postgresql://172.17.0.5:5432/sampledb", "test", "test");
+			connection = DriverManager.getConnection(
+					"jdbc:postgresql://" + System.getenv("DB_HOST") + "/" + System.getenv("POSTGRESQL_DATABASE"),
+					System.getenv("POSTGRESQL_USER"), System.getenv("POSTGRESQL_PASSWORD"));
 			if (connection != null) {
 				connection.setAutoCommit(false);
 				logger.debug("Opened database to select items successfully");
