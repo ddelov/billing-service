@@ -79,7 +79,7 @@ public class BillingService {
 			}
 
 			return Response.status(200).entity(billings).build();
-		} else {
+		} else {//no customer specified
 			Map<String, Integer> billings = new HashMap<String, Integer>();
 			String query = "SELECT * FROM openshift.dev_ownership";
 			List<Item> scanOutcome = new ArrayList<Item>();
@@ -90,6 +90,7 @@ public class BillingService {
 			}
 				logger.debug("scanOutcome.size() = " + scanOutcome.size());
 			for (Item item : scanOutcome) {
+					customerId = item.getCustomerId();
 				if (!billings.containsKey(customerId)) {
 					int billing = calculateBillingForThePeriod(item);
 					billings.put(customerId, billing);
