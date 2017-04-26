@@ -80,7 +80,7 @@ public class BillingService {
 			return Response.status(200).entity(billings).build();
 		} else {
 			Map<String, Integer> billings = new HashMap<String, Integer>();
-			String query = "SELECT * FROM openshift.dev_ownership;";
+			String query = "SELECT * FROM openshift.dev_ownership";
 			List<Item> scanOutcome = new ArrayList<Item>();
 			try {
 				scanOutcome = loadItems(query);
@@ -172,6 +172,7 @@ public class BillingService {
 				logger.debug("Opened database to select items successfully");
 
 				statement = connection.createStatement();
+				logger.debug("Executing query : " + query);
 				resultSet = statement.executeQuery(query);
 				while (resultSet.next()) {
 					Item item = new Item();
@@ -184,6 +185,7 @@ public class BillingService {
 					item.setValidFrom(resultSet.getString(ConfigurationConstants.COL_VALID_FROM));
 					item.setValidTo(resultSet.getString(ConfigurationConstants.COL_VALID_TO));
 					items.add(item);
+					logger.debug("Found item "+ item);
 				}
 			}
 		} catch (Exception e) {

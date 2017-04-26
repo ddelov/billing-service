@@ -76,5 +76,18 @@ public class Item {
 	public void setValidTo(String validTo) {
 		this.validTo = validTo;
 	}
-	
+
+		@Override
+		public String toString() {
+				return "Item{" +
+								"id='" + id + '\'' +
+								", customerId='" + customerId + '\'' +
+								", thingName='" + thingName + '\'' +
+								", thingType='" + thingType + '\'' +
+								", sn='" + sn + '\'' +
+								", own=" + own +
+								", validFrom='" + validFrom + '\'' +
+								", validTo='" + validTo + '\'' +
+								'}';
+		}
 }
